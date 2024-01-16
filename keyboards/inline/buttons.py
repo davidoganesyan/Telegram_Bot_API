@@ -63,5 +63,13 @@ def button_for_history(searching_id: int) -> InlineKeyboardMarkup:
     return history_button
 
 
+def button_for_url(hotel) -> InlineKeyboardMarkup:
+    url_button = InlineKeyboardMarkup()
+    button = InlineKeyboardButton(text='Ссылка на отель',
+                                  url='https://www.hotels.com/h' + str(hotel["hotel_id"]) + 'Hotel-Information')
+    url_button.add(button)
+    return url_button
+
+
 photos_markup = Keyboa(items=list(range(1, 6)), items_in_row=5)  # Кнопка для количества фотографий
 hotel_markup = Keyboa(items=list(range(1, 6)), items_in_row=5)  # Кнопка для количества отелей

@@ -1,6 +1,7 @@
+from keyboards.inline.buttons import button_for_url
 from loader import bot
 from datetime import date, datetime, timedelta
-from telebot.types import CallbackQuery
+from telebot.types import CallbackQuery, InputMediaPhoto
 from states.search_info import UserSearchState
 from keyboards.inline import buttons
 from telegram_bot_calendar import DetailedTelegramCalendar
@@ -205,13 +206,16 @@ def searching(call: CallbackQuery):
                        f'\nАдрес: {hotel["address"]}' \
                        f'\nРасстояние от центра: {hotel["hotel_distance"]:.2f} км.' \
                        f'\nЦена за один день: {hotel["hotel_price"]:.1f} руб.' \
-                       f'\nЦена за все дни проживания ({data["all_days"]}): {hotel["hotel_price"] * data["all_days"]:.1f} руб.' \
-                       f'\n\nСсылка: ' \
-                       f'https://www.hotels.com/h{hotel["hotel_id"]}.' \
-                       f'Hotel-Information'
-                bot.send_message(call.message.chat.id, text)
-                for photo in hotel['photos_list']:
-                    bot.send_photo(call.message.chat.id, photo)
+                       f'\nЦена за все дни проживания ({data["all_days"]}): {hotel["hotel_price"] * data["all_days"]:.1f} руб.'
+
+                media_group = []
+                for index in range(len(hotel['photos_list'])):
+                    media_group.append(
+                        InputMediaPhoto(media=hotel['photos_list'][index], caption=text if index == 0 else ''))
+
+                bot.send_media_group(call.message.chat.id, media=media_group)
+                bot.send_message(call.message.chat.id, text='Детальную информацию можно узнать по ссылке ниже:',
+                                 reply_markup=button_for_url(hotel))
 
             data['hotel_info'] = cor_list
             data_to_db(data)
@@ -239,11 +243,12 @@ def get_from_history(call: CallbackQuery) -> None:
                f'\nАдрес: {hotel["address"]}' \
                f'\nРасстояние от центра: {hotel["distance"]:.2f} км.' \
                f'\nЦена за один день: {hotel["price"]:.1f} руб.' \
-               f'\nЦена за все дни проживания ({hotel["days"]}): {hotel["price"] * hotel["days"]:.1f} руб.' \
-               f'\n\nСсылка: ' \
-               f'https://www.hotels.com/h{hotel["hotel_id"]}.' \
-               f'Hotel-Information'
+               f'\nЦена за все дни проживания ({hotel["days"]}): {hotel["price"] * hotel["days"]:.1f} руб.'
 
-        bot.send_message(call.message.chat.id, text)
-        for photo in hotel['photos_list']:
-            bot.send_photo(call.message.chat.id, photo)
+        media_group = []
+        for index in range(len(hotel['photos_list'])):
+            media_group.append(InputMediaPhoto(media=hotel['photos_list'][index], caption=text if index == 0 else ''))
+
+        bot.send_media_group(call.message.chat.id, media=media_group)
+        bot.send_message(call.message.chat.id, text='Детальную информацию можно узнать по ссылке ниже:',
+                         reply_markup=button_for_url(hotel))
