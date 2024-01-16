@@ -1,4 +1,3 @@
-from keyboards.inline.buttons import button_for_history
 from loader import bot
 from states.search_info import UserSearchState
 from database.crud import hotels_searches_from_db
@@ -149,7 +148,7 @@ def get_distance_to(message: Message) -> None:
                                  'Максимальная удаленность от центра должна быть больше чем минимальная ')
 
         bot.set_state(message.chat.id, UserSearchState.waiting_for_answer)
-        buttons.button_for_answer(message)
+        bot.send_message(message.chat.id, 'Все верно?', reply_markup=buttons.button_for_answer())
 
     else:
         bot.send_message(message.chat.id, 'Что-то пошло не так, попробуйте еще раз')
@@ -187,6 +186,6 @@ def history(message: Message) -> None:
             text = '\n'.join((text, add_text))
             add_text = f'Диапазон расстояния от центра: {searches.distance_from} - {searches.distance_to} км.'
             text = '\n'.join((text, add_text))
-        bot.send_message(message.chat.id, text, reply_markup=button_for_history(searches.get_id()))
+        bot.send_message(message.chat.id, text, reply_markup=buttons.button_for_history(searches.get_id()))
 
     bot.set_state(message.chat.id, UserSearchState.get_from_history)

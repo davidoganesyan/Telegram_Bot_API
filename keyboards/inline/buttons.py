@@ -1,5 +1,5 @@
-from loader import bot
 from keyboa import Keyboa
+from loader import bot
 from typing import List
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 
@@ -10,7 +10,7 @@ def button_for_cities(message: Message, citi_list: List) -> InlineKeyboardMarkup
     Записывает весь список городов от rapidapi в хранилище для дальнейшего использования
     :param message: Сообщение пользователя (город)
     :param citi_list: Ответ от rapidapi
-    :return: None
+    :return: InlineKeyboardMarkup
     """
 
     cities_button = InlineKeyboardMarkup(row_width=1)
@@ -19,37 +19,34 @@ def button_for_cities(message: Message, citi_list: List) -> InlineKeyboardMarkup
         cities_button.add(button)
     with bot.retrieve_data(message.chat.id) as data:
         data['city_list'] = citi_list
-        print(data['city_list'])
-        print(data)
+
     return cities_button
 
 
-def button_for_photo(message: Message) -> None:
+def button_for_photo() -> InlineKeyboardMarkup:
     """
     Кнопка с вопросом о необходимости фотографии для отелей
-    :param message: Сообщение пользователя
-    :return: None
+    :return: InlineKeyboardMarkup
     """
 
     photo_button = InlineKeyboardMarkup(row_width=2)
     button1 = InlineKeyboardButton('Да', callback_data='Да')
     button2 = InlineKeyboardButton('Нет', callback_data='Нет')
     photo_button.add(button1, button2)
-    bot.send_message(message.chat.id, 'Нужны фотографии отелей?', reply_markup=photo_button)
+    return photo_button
 
 
-def button_for_answer(message: Message) -> None:
+def button_for_answer() -> InlineKeyboardMarkup:
     """
     Кнопка для ответа пользователя о корректности данных поиска
-    :param message: Сообщение пользователя
-    :return: None
+    :return: InlineKeyboardMarkup
     """
 
     answer_button = InlineKeyboardMarkup(row_width=2)
     button1 = InlineKeyboardButton('Да', callback_data='Да')
     button2 = InlineKeyboardButton('Нет', callback_data='Нет')
     answer_button.add(button1, button2)
-    bot.send_message(message.chat.id, 'Все верно?', reply_markup=answer_button)
+    return answer_button
 
 
 def button_for_history(searching_id: int) -> InlineKeyboardMarkup:
@@ -68,10 +65,16 @@ def button_for_history(searching_id: int) -> InlineKeyboardMarkup:
 def button_for_url(hotel) -> InlineKeyboardMarkup:
     url_button = InlineKeyboardMarkup()
     button = InlineKeyboardButton(text='Ссылка на отель',
-                                  url='https://www.hotels.com/h' + str(hotel["hotel_id"]) + '.' + 'Hotel-Information')
+                                  url='https://www.hotels.com/h' + str(hotel["hotel_id"]) + '.Hotel-Information')
     url_button.add(button)
     return url_button
 
 
-photos_markup = Keyboa(items=list(range(1, 6)), items_in_row=5)  # Кнопка для количества фотографий
-hotel_markup = Keyboa(items=list(range(1, 6)), items_in_row=5)  # Кнопка для количества отелей
+def amount_of() -> InlineKeyboardMarkup:
+    """
+    Кнопка для количества отелей и фотографий
+    :return: InlineKeyboardMarkup
+    """
+
+    markup = Keyboa(items=list(range(1, 6)), items_in_row=5)
+    return markup()

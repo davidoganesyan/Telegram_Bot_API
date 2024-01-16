@@ -1,4 +1,3 @@
-from keyboards.inline.buttons import button_for_url
 from loader import bot
 from datetime import date, datetime, timedelta
 from telebot.types import CallbackQuery, InputMediaPhoto
@@ -27,7 +26,7 @@ def city_search(call: CallbackQuery) -> None:
             for key, value in city.items():
                 if value == call.data:
                     text = city
-        print(data) # потом удалить
+
     bot.set_state(call.message.chat.id, UserSearchState.date_in_sr)
     bot.send_message(call.message.chat.id, f'Вы выбрали город: {text["Name"]}\nТеперь выберите дату заезда')
     bot.send_message(call.message.chat.id, f'Укажите: {LSTEP[step]}', reply_markup=calendar)
@@ -35,7 +34,6 @@ def city_search(call: CallbackQuery) -> None:
     with bot.retrieve_data(call.message.chat.id) as data:
         data['city_sr'] = call.data
         data['city_sr_name'] = text['Name']
-        print(data) # потом удалить
 
 
 @bot.callback_query_handler(func=DetailedTelegramCalendar.func(calendar_id=1), state=UserSearchState.date_in_sr)
@@ -86,7 +84,7 @@ def date_out_info(call: CallbackQuery) -> None:
         bot.set_state(call.message.chat.id, UserSearchState.hotel_num_sr)
         bot.send_message(call.message.chat.id,
                          f'Вы выбрали: {result.strftime("%d.%m.%Y")}\nВведите количество отелей для поиска',
-                         reply_markup=buttons.hotel_markup())
+                         reply_markup=buttons.amount_of())
 
         with bot.retrieve_data(call.message.chat.id) as data:
             data['date_out_sr'] = result.strftime("%d.%m.%Y")
@@ -105,7 +103,7 @@ def hotel_num_for_search(call: CallbackQuery) -> None:
     """
 
     bot.send_message(call.message.chat.id, f'Искомое количество отелей: {call.data}')
-    buttons.button_for_photo(call.message)
+    bot.send_message(call.message.chat.id, 'Нужны фотографии отелей?', reply_markup=buttons.button_for_photo())
     bot.set_state(call.message.chat.id, UserSearchState.photo_sr)
 
     with bot.retrieve_data(call.message.chat.id) as data:
@@ -127,7 +125,7 @@ def photo_answer_info(call: CallbackQuery) -> None:
     if call.data == 'Да':
         bot.send_message(call.message.chat.id,
                          'Вы выбрали вариант с фото.\nСколько фотографий выводить для каждого отеля?',
-                         reply_markup=buttons.photos_markup())
+                         reply_markup=buttons.amount_of())
         bot.set_state(call.message.chat.id, UserSearchState.photo_num_sr)
 
     elif call.data == 'Нет' and data['command'] == '/bestdeal':
@@ -138,10 +136,10 @@ def photo_answer_info(call: CallbackQuery) -> None:
         text = f'Критерии поиска отелей, которые вы выбрали:\n' \
                f'Команда: {data["command"]}\nГород: {data["city_sr_name"]},\n' \
                f'Дата заезда: {data["date_in_sr"]}, Дата выезда: {data["date_out_sr"]}\n' \
-               f'Отелей для поиска: {data["hotel_num_sr"]}, Вариант с фото: {data["photo_sr"]}\n'
-        bot.send_message(call.message.chat.id, text)
+               f'Отелей для поиска: {data["hotel_num_sr"]}, Вариант с фото: {data["photo_sr"]}\n' \
+               f'Все верно?'
+        bot.send_message(call.message.chat.id, text, reply_markup=buttons.button_for_answer())
         bot.set_state(call.message.chat.id, UserSearchState.waiting_for_answer)
-        buttons.button_for_answer(call.message)
 
 
 @bot.callback_query_handler(func=None, state=UserSearchState.photo_num_sr)
@@ -166,10 +164,10 @@ def photo_num_search(call: CallbackQuery) -> None:
                f'Команда: {data["command"]}\nГород: {data["city_sr_name"]}\n' \
                f'Дата заезда: {data["date_in_sr"]}, Дата выезда: {data["date_out_sr"]}\n' \
                f'Отелей для поиска: {data["hotel_num_sr"]}, Вариант с фото: {data["photo_sr"]}\n' \
-               f'Фото для каждого отеля: {data["photo_num_sr"]}'
-        bot.send_message(call.message.chat.id, text)
+               f'Фото для каждого отеля: {data["photo_num_sr"]}\n' \
+               f'Все верно?'
+        bot.send_message(call.message.chat.id, text, reply_markup=buttons.button_for_answer())
         bot.set_state(call.message.chat.id, UserSearchState.waiting_for_answer)
-        buttons.button_for_answer(call.message)
 
 
 @bot.callback_query_handler(func=None, state=UserSearchState.waiting_for_answer)
@@ -186,7 +184,7 @@ def searching(call: CallbackQuery):
         if call.data == 'Да':
 
             if data['command'] != '/bestdeal':
-                print(data)
+
                 bot.send_message(call.message.chat.id, 'Начинаю поиск отелей, пожалуйста подождите...')
                 hotel_list = hotel_search(data['city_sr'], data['date_in_sr'], data['date_out_sr'])
                 new_hotel_list = cor_hotel_list(hotel_list, data['command'], data['hotel_num_sr'])
@@ -209,16 +207,20 @@ def searching(call: CallbackQuery):
                        f'\nЦена за один день: {hotel["hotel_price"]:.1f} руб.' \
                        f'\nЦена за все дни проживания ({data["all_days"]}): {hotel["hotel_price"] * data["all_days"]:.1f} руб.'
 
-                media_group = []
-                for index in range(len(hotel['photos_list'])):
-                    media_group.append(
-                        InputMediaPhoto(media=hotel['photos_list'][index], caption=text if index == 0 else ''))
+                if not hotel['photos_list']:
+                    bot.send_message(call.message.chat.id, text=text)
+                else:
+                    media_group = []
+                    for index in range(len(hotel['photos_list'])):
+                        media_group.append(
+                            InputMediaPhoto(media=hotel['photos_list'][index], caption=text if index == 0 else ''))
+                    bot.send_media_group(call.message.chat.id, media=media_group)
 
-                bot.send_media_group(call.message.chat.id, media=media_group)
                 bot.send_message(call.message.chat.id, text='Детальную информацию можно узнать по ссылке ниже:',
-                                 reply_markup=button_for_url(hotel))
+                                 reply_markup=buttons.button_for_url(hotel))
 
             data['hotel_info'] = cor_list
+
             data_to_db(data)
 
         else:
@@ -246,10 +248,15 @@ def get_from_history(call: CallbackQuery) -> None:
                f'\nЦена за один день: {hotel["price"]:.1f} руб.' \
                f'\nЦена за все дни проживания ({hotel["days"]}): {hotel["price"] * hotel["days"]:.1f} руб.'
 
-        media_group = []
-        for index in range(len(hotel['photos_list'])):
-            media_group.append(InputMediaPhoto(media=hotel['photos_list'][index], caption=text if index == 0 else ''))
+        if not hotel['photos_list']:
+            bot.send_message(call.message.chat.id, text=text)
+        else:
+            media_group = []
+            for index in range(len(hotel['photos_list'])):
+                media_group.append(
+                    InputMediaPhoto(media=hotel['photos_list'][index], caption=text if index == 0 else ''))
 
-        bot.send_media_group(call.message.chat.id, media=media_group)
+            bot.send_media_group(call.message.chat.id, media=media_group)
+
         bot.send_message(call.message.chat.id, text='Детальную информацию можно узнать по ссылке ниже:',
-                         reply_markup=button_for_url(hotel))
+                         reply_markup=buttons.button_for_url(hotel))
