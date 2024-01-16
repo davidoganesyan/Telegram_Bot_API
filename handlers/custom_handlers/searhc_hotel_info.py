@@ -1,7 +1,7 @@
 from keyboards.inline.buttons import button_for_history
 from loader import bot
 from states.search_info import UserSearchState
-from database.data import hotels_searches_from_db
+from database.crud import hotels_searches_from_db
 from utils.rapida_sr.city_request import city_searching
 from telebot.types import Message
 from keyboards.inline import buttons
@@ -41,7 +41,8 @@ def region_search(message: Message) -> None:
     """
 
     bot.set_state(message.chat.id, UserSearchState.get_city_sr)
-    buttons.button_for_cities(message, city_searching(message.text))
+    bot.send_message(message.chat.id, 'Уточните город для поиска:',
+                     reply_markup=buttons.button_for_cities(message, city_searching(message.text)))
 
 
 @bot.message_handler(state=UserSearchState.min_price_sr)

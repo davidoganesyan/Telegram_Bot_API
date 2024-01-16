@@ -8,7 +8,7 @@ from telegram_bot_calendar import DetailedTelegramCalendar
 from keyboards.replay.ru_calendar import LSTEP
 from utils.rapida_sr.hotel_details import cor_hotel_list, get_hotel_info
 from utils.rapida_sr.hotel_request import hotel_search
-from database.data import data_to_db, Searching, hotel_data_from_db
+from database.crud import data_to_db, Searching, hotel_data_from_db
 
 
 @bot.callback_query_handler(func=None, state=UserSearchState.get_city_sr)
@@ -27,7 +27,7 @@ def city_search(call: CallbackQuery) -> None:
             for key, value in city.items():
                 if value == call.data:
                     text = city
-
+        print(data) # потом удалить
     bot.set_state(call.message.chat.id, UserSearchState.date_in_sr)
     bot.send_message(call.message.chat.id, f'Вы выбрали город: {text["Name"]}\nТеперь выберите дату заезда')
     bot.send_message(call.message.chat.id, f'Укажите: {LSTEP[step]}', reply_markup=calendar)
@@ -35,6 +35,7 @@ def city_search(call: CallbackQuery) -> None:
     with bot.retrieve_data(call.message.chat.id) as data:
         data['city_sr'] = call.data
         data['city_sr_name'] = text['Name']
+        print(data) # потом удалить
 
 
 @bot.callback_query_handler(func=DetailedTelegramCalendar.func(calendar_id=1), state=UserSearchState.date_in_sr)
@@ -185,7 +186,7 @@ def searching(call: CallbackQuery):
         if call.data == 'Да':
 
             if data['command'] != '/bestdeal':
-
+                print(data)
                 bot.send_message(call.message.chat.id, 'Начинаю поиск отелей, пожалуйста подождите...')
                 hotel_list = hotel_search(data['city_sr'], data['date_in_sr'], data['date_out_sr'])
                 new_hotel_list = cor_hotel_list(hotel_list, data['command'], data['hotel_num_sr'])

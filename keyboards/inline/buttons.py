@@ -4,7 +4,7 @@ from typing import List
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 
 
-def button_for_cities(message: Message, citi_list: List) -> None:
+def button_for_cities(message: Message, citi_list: List) -> InlineKeyboardMarkup:
     """
     Кнопка для уточнения городов для выбора пользователем.
     Записывает весь список городов от rapidapi в хранилище для дальнейшего использования
@@ -17,9 +17,11 @@ def button_for_cities(message: Message, citi_list: List) -> None:
     for citi in citi_list:
         button = InlineKeyboardButton(text=citi['Name'], callback_data=citi['city_id'])
         cities_button.add(button)
-    bot.send_message(message.chat.id, 'Уточните город', reply_markup=cities_button)
     with bot.retrieve_data(message.chat.id) as data:
         data['city_list'] = citi_list
+        print(data['city_list'])
+        print(data)
+    return cities_button
 
 
 def button_for_photo(message: Message) -> None:
@@ -66,7 +68,7 @@ def button_for_history(searching_id: int) -> InlineKeyboardMarkup:
 def button_for_url(hotel) -> InlineKeyboardMarkup:
     url_button = InlineKeyboardMarkup()
     button = InlineKeyboardButton(text='Ссылка на отель',
-                                  url='https://www.hotels.com/h' + str(hotel["hotel_id"]) + 'Hotel-Information')
+                                  url='https://www.hotels.com/h' + str(hotel["hotel_id"]) + '.' + 'Hotel-Information')
     url_button.add(button)
     return url_button
 
